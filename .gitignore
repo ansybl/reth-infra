@@ -1,0 +1,10 @@
+# Written by Terraform
+.terraform*
+terraform.tfstate*
+
+# Environment
+.env
+
+# Misc
+terraform-service-key.json
+terraform-output.json
