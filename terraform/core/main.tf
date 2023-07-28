@@ -61,10 +61,14 @@ module "reth_archive_node_vm" {
   reth_rpc_source_range = var.reth_rpc_source_range
   vm_tags               = var.reth_vm_tags
   # This has the permission to download images from Container Registry
-  client_email      = var.client_email
-  datadir_disk_size = var.reth_datadir_disk_size
-  volume_mounts     = local.volume_mounts
-  volumes           = local.volumes
+  client_email          = var.client_email
+  datadir_disk_size     = var.reth_datadir_disk_size
+  datadir_disk_snapshot = var.reth_datadir_disk_snapshot
+  scratch_disk_count    = local.scratch_disk_count
+  volume_mounts         = local.volume_mounts
+  volumes               = local.reth_volumes
+  # check logs with:
+  # sudo journalctl -u google-startup-scripts.service
   metadata_startup_script = join("\n", [
     data.local_file.format_script.content,
   ])
@@ -74,7 +78,7 @@ module "lighthouse_node_vm" {
   for_each        = toset(var.lighthouse_nodes)
   source          = "../gce-with-container"
   image           = var.lighthouse_image
-  custom_args     = local.lighthouse_custom_args
+  custom_args     = local.lighthouse_custom_args_map[each.value]
   privileged_mode = true
   activate_tty    = true
   machine_type    = var.lighthouse_machine_type
@@ -99,6 +103,8 @@ module "lighthouse_node_vm" {
   datadir_disk_size = var.lighthouse_datadir_disk_size
   volume_mounts     = local.volume_mounts
   volumes           = local.volumes
+  # check logs with:
+  # sudo journalctl -u google-startup-scripts.service
   metadata_startup_script = join("\n", [
     data.local_file.format_script.content,
   ])
