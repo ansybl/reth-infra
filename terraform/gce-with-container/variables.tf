@@ -95,6 +95,12 @@ variable "datadir_disk_size" {
   default     = 100
 }
 
+variable "datadir_disk_snapshot" {
+  description = "Deploy the datadir disk from a snapshot unless empty."
+  type        = string
+  default     = null
+}
+
 variable "create_static_ip" {
   description = "Create a static IP"
   type        = bool
@@ -167,6 +173,12 @@ variable "client_email" {
 variable "metadata_startup_script" {
   type    = string
   default = ""
+}
+
+variable "scratch_disk_count" {
+  description = "Number of NVMe SSD disks to use for the raid0"
+  type        = number
+  default     = 0
 }
 
 variable "volume_mounts" {

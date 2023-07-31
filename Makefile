@@ -18,6 +18,11 @@ devops/terraform/plan:
 devops/terraform/apply:
 	terraform -chdir=terraform/core apply -auto-approve
 
+devops/terraform/redeploy/reth_archive_node_vm_datadir_disk/%:
+	terraform -chdir=terraform/core apply \
+	-replace=module.reth_archive_node_vm[\"$*\"].google_compute_disk.datadir \
+	-target=module.reth_archive_node_vm[\"$*\"].google_compute_disk.datadir
+
 devops/terraform/redeploy/reth_archive_node_vm/%:
 	terraform -chdir=terraform/core apply \
 	-replace=module.reth_archive_node_vm[\"$*\"].google_compute_instance.this \

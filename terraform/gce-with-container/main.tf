@@ -3,6 +3,7 @@ locals {
     name  = var_name
     value = var_value
   }]
+  has_datadir_disk_snapshot = var.datadir_disk_snapshot != null && var.datadir_disk_snapshot != ""
 }
 
 ####################
@@ -52,9 +53,21 @@ resource "google_compute_disk" "boot" {
   }
 }
 
+data "google_compute_snapshot" "archive_snapshot" {
+  # workaround for the name as it cannot be empty
+  name = local.has_datadir_disk_snapshot ? var.datadir_disk_snapshot : "no-snapshot"
+}
+
 resource "google_compute_disk" "datadir" {
-  name = "${var.prefix}-${var.instance_name}-datadir-disk-${var.suffix}"
-  type = "pd-balanced"
+  name     = "${var.prefix}-${var.instance_name}-datadir-disk-${var.suffix}"
+  snapshot = local.has_datadir_disk_snapshot ? data.google_compute_snapshot.archive_snapshot.self_link : null
+  type     = "pd-balanced"
+  # this disk was once restored from a snapshot
+  lifecycle {
+    ignore_changes = [
+      snapshot,
+    ]
+  }
   size = var.datadir_disk_size
   labels = merge(tomap({
     container-vm  = module.gce-container.vm_container_label,
@@ -70,6 +83,13 @@ resource "google_compute_instance" "this" {
   # If true, allows Terraform to stop the instance to update its properties.
   allow_stopping_for_update = true
   tags                      = var.vm_tags
+
+  dynamic "scratch_disk" {
+    for_each = range(var.scratch_disk_count)
+    content {
+      interface = "NVME"
+    }
+  }
 
   boot_disk {
     source = google_compute_disk.boot.self_link
@@ -114,6 +134,8 @@ resource "google_compute_instance" "this" {
     ignore_changes = [
       # we don't want the Container-Optimized OS changes to force a redeployment of our VM without our consent
       boot_disk[0].initialize_params[0].image,
+      # VM that are already up running shouldn't be impacted by startup script updates
+      metadata_startup_script,
     ]
   }
 
