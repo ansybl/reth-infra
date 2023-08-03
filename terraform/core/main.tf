@@ -1,10 +1,10 @@
-# terraform {
-#   backend "gcs" {
-#     bucket      = "reth-infra-bucket-tfstate"
-#     prefix      = "terraform/state"
-#     credentials = "../terraform-service-key.json"
-#   }
-# }
+terraform {
+  backend "gcs" {
+    bucket      = "reth-infra-bucket-tfstate"
+    prefix      = "terraform/state"
+    credentials = "../terraform-service-key.json"
+  }
+}
 
 provider "google" {
   project     = var.project
@@ -27,6 +27,10 @@ resource "google_storage_bucket" "default" {
   storage_class = "STANDARD"
   versioning {
     enabled = true
+  }
+  labels = {
+    prefix       = local.service_name
+    service_name = local.service_name
   }
 }
 
