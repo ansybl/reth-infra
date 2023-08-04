@@ -42,6 +42,7 @@ resource "google_compute_disk" "boot" {
   labels = merge(tomap({
     container-vm  = module.gce-container.vm_container_label,
     instance_name = var.instance_name,
+    prefix        = var.prefix,
     }),
     var.labels,
   )
@@ -72,6 +73,7 @@ resource "google_compute_disk" "datadir" {
   labels = merge(tomap({
     container-vm  = module.gce-container.vm_container_label,
     instance_name = var.instance_name,
+    prefix        = var.prefix,
     }),
     var.labels,
   )
@@ -119,6 +121,7 @@ resource "google_compute_instance" "this" {
     container-vm  = module.gce-container.vm_container_label,
     prefix        = var.prefix
     instance_name = var.instance_name,
+    prefix        = var.prefix,
     }),
     var.labels,
   )

@@ -29,7 +29,7 @@ But it could be overridden using the command below and updating the secret manag
 openssl rand -hex 32
 ```
 
-## Bootstraping
+## Bootstrapping
 
 Synchronizing the reth archive node from scratch can take a long time on network attached disk.
 For this reason it's possible to mount local NVMe SSDs in raid0 to speed up the process.

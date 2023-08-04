@@ -110,9 +110,11 @@ resource "google_compute_address" "static" {
   provider = google-beta
   name     = "${var.prefix}-${var.instance_name}-address-${var.suffix}"
   labels = merge(tomap({
-    prefix        = var.prefix
-    instance_name = var.instance_name
+    container-vm  = module.gce-container.vm_container_label,
+    instance_name = var.instance_name,
+    prefix        = var.prefix,
     }),
+    var.labels,
   )
 }
 
@@ -121,8 +123,10 @@ resource "google_compute_address" "static_internal" {
   name         = "${var.prefix}-${var.instance_name}-internal-address-${var.suffix}"
   address_type = "INTERNAL"
   labels = merge(tomap({
-    prefix        = var.prefix
-    instance_name = var.instance_name
+    container-vm  = module.gce-container.vm_container_label,
+    instance_name = var.instance_name,
+    prefix        = var.prefix,
     }),
+    var.labels,
   )
 }
