@@ -36,12 +36,12 @@ variable "chain_name" {
 
 variable "reth_image" {
   type    = string
-  default = "ghcr.io/paradigmxyz/reth:v0.1.0-alpha.4"
+  default = "ghcr.io/paradigmxyz/reth:v0.1.0-alpha.10"
 }
 
 variable "lighthouse_image" {
   type    = string
-  default = "sigp/lighthouse:v4.3.0"
+  default = "sigp/lighthouse:v4.5.0"
 }
 
 variable "create_firewall_rule" {
@@ -87,7 +87,7 @@ variable "reth_datadir_disk_size" {
 
 variable "lighthouse_datadir_disk_size" {
   type    = number
-  default = 500
+  default = 1000
 }
 
 # consumed by both reth and lighthouse on their respective containers
@@ -197,11 +197,11 @@ locals {
       readOnly  = false
     },
   ]
-  volumes = [
+  prysm_volumes = [
     {
       name = "datadir"
       hostPath = {
-        path = var.bootstrap ? var.datadir_host_local_ssd_path : var.datadir_host_path
+        path = var.datadir_host_path
       }
     },
   ]

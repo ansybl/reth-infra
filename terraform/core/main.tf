@@ -106,7 +106,7 @@ module "lighthouse_node_vm" {
   client_email      = var.client_email
   datadir_disk_size = var.lighthouse_datadir_disk_size
   volume_mounts     = local.volume_mounts
-  volumes           = local.volumes
+  volumes           = local.prysm_volumes
   # check logs with:
   # sudo journalctl -u google-startup-scripts.service
   metadata_startup_script = join("\n", [

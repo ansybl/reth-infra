@@ -1,6 +1,6 @@
 echo "$(hostname) $(date) Mounting attached disk"
 sudo lsblk
-part=$(sudo lsblk | grep 'part /' | grep -oh 'sd[a-z]1' | cut -c1-3 | uniq)
+part=$(sudo lsblk | grep --extended-regexp 'part +/' | grep -oh 'sd[a-z]1' | cut -c1-3 | uniq)
 echo "part=$part"
 devs=$(sudo lsblk | grep disk | grep -v $part | grep -oh 'sd[a-z]')
 echo "devs=$devs"

@@ -27,6 +27,7 @@ devops/terraform/redeploy/reth_archive_node_vm/%:
 	terraform -chdir=terraform/core apply \
 	-replace=module.reth_archive_node_vm[\"$*\"].google_compute_instance.this \
 	-replace=module.reth_archive_node_vm[\"$*\"].google_compute_disk.boot \
+	-target=module.lighthouse_node_vm[\"does-not-exist-workaround\"] \
 	-target=module.reth_archive_node_vm[\"$*\"].google_compute_instance.this \
 	-target=module.reth_archive_node_vm[\"$*\"].google_compute_disk.boot \
 	-target=module.reth_archive_node_vm[\"$*\"]
@@ -35,11 +36,15 @@ devops/terraform/redeploy/lighthouse_node_vm/%:
 	terraform -chdir=terraform/core apply \
 	-replace=module.lighthouse_node_vm[\"$*\"].google_compute_instance.this \
 	-replace=module.lighthouse_node_vm[\"$*\"].google_compute_disk.boot \
+	-target=module.reth_archive_node_vm[\"does-not-exist-workaround\"] \
 	-target=module.lighthouse_node_vm[\"$*\"].google_compute_instance.this \
 	-target=module.lighthouse_node_vm[\"$*\"].google_compute_disk.boot \
 	-target=module.lighthouse_node_vm[\"$*\"]
 
 devops/terraform/redeploy/nodes: devops/terraform/redeploy/reth_archive_node_vm/node1
+
+devops/gcloud/reboot/vm/%:
+	gcloud compute instances reset $*
 
 devops/terraform/output:
 	terraform -chdir=terraform/core output
