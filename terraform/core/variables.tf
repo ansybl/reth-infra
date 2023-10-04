@@ -52,9 +52,9 @@ variable "create_firewall_rule" {
 
 variable "reth_machine_type" {
   type = string
-  # since reth v0.1.0-alpha.4 is still single threaded a C2 type offers a better performances/price
-  # tradeoff while syncing on a raid0 as each core has higher clock speed than other types
-  default = "c2d-highmem-2"
+  # while v0.1.0-alpha.10 syncing is still single threaded, serving RPC requests is multi threaded
+  # so more core offers better performances (excluding the bootstrapping process)
+  default = "n2-standard-8"
 }
 
 variable "lighthouse_machine_type" {
@@ -77,35 +77,43 @@ variable "lighthouse_vm_tags" {
 variable "bootstrap" {
   description = "Set true to start syncing the reth node from scratch using raid0 local NVMe SSD"
   type        = bool
-  default     = false
+  default     = true
+}
+
+variable "create_backup_bucket" {
+  description = "Set true to create a bucked for node backup."
+  type        = bool
+  default     = true
 }
 
 variable "reth_datadir_disk_size" {
-  type    = number
-  default = 2500
+  description = "Reth persistent SSD disk size in GB."
+  type        = number
+  default     = 2500
 }
 
 variable "lighthouse_datadir_disk_size" {
-  type    = number
-  default = 1000
+  description = "Lighthouse persistent SSD disk size in GB."
+  type        = number
+  default     = 1000
 }
 
-# consumed by both reth and lighthouse on their respective containers
 variable "datadir_path" {
-  type    = string
-  default = "/mnt/datadir"
+  description = "Consumed by both Reth and Lighthouse on their respective containers."
+  type        = string
+  default     = "/mnt/datadir"
 }
 
-# consumed by both reth and lighthouse on their respective VMs
 variable "datadir_host_path" {
-  type    = string
-  default = "/mnt/disks/sdb"
+  description = "Consumed by both Reth and Lighthouse on their respective VMs."
+  type        = string
+  default     = "/mnt/disks/sdb"
 }
 
-# consumed by reth VM when bootstrapping the node from scratch, refs var.bootstrap
 variable "datadir_host_local_ssd_path" {
-  type    = string
-  default = "/mnt/disks/md0"
+  description = "Consumed by Reth VM when bootstrapping the node from scratch, refs var.bootstrap."
+  type        = string
+  default     = "/mnt/disks/md0"
 }
 
 variable "reth_datadir_disk_snapshot" {
@@ -134,14 +142,7 @@ variable "genesis_beacon_api_url" {
   default     = "https://beaconstate-mainnet.chainsafe.io"
 }
 
-variable "reth_nodes" {
-  type = list(string)
-  default = [
-    "node1",
-  ]
-}
-
-variable "lighthouse_nodes" {
+variable "nodes" {
   type = list(string)
   default = [
     "node1",
@@ -181,15 +182,17 @@ locals {
     var.checkpoint_sync_url,
   ]
   lighthouse_custom_args_map = {
-    "node1" = concat(
+    for node in var.nodes :
+    node => concat(
       local.lighthouse_base_custom_args, [
         "--execution-endpoint",
-        "http://${module.reth_archive_node_vm["node1"].google_compute_instance_ip}:8551",
-    ])
+        "http://${module.reth_archive_node_vm[node].google_compute_instance_ip}:8551",
+      ]
+    )
   }
-
   # 8 disks of 375G each for a 3T raid0
-  scratch_disk_count = var.bootstrap ? 8 : 0
+  scratch_disk_count     = var.bootstrap ? 8 : 0
+  reth_datadir_disk_size = var.bootstrap ? 0 : var.reth_datadir_disk_size
   volume_mounts = [
     {
       mountPath = var.datadir_path
