@@ -39,7 +39,7 @@ data "local_file" "format_script" {
 }
 
 module "reth_archive_node_vm" {
-  for_each        = toset(var.reth_nodes)
+  for_each        = toset(var.nodes)
   source          = "../gce-with-container"
   image           = var.reth_image
   custom_args     = local.reth_custom_args
@@ -66,7 +66,7 @@ module "reth_archive_node_vm" {
   vm_tags               = var.reth_vm_tags
   # This has the permission to download images from Container Registry
   client_email          = var.client_email
-  datadir_disk_size     = var.reth_datadir_disk_size
+  datadir_disk_size     = local.reth_datadir_disk_size
   datadir_disk_snapshot = var.reth_datadir_disk_snapshot
   scratch_disk_count    = local.scratch_disk_count
   volume_mounts         = local.volume_mounts
@@ -79,7 +79,7 @@ module "reth_archive_node_vm" {
 }
 
 module "lighthouse_node_vm" {
-  for_each        = toset(var.lighthouse_nodes)
+  for_each        = toset(var.nodes)
   source          = "../gce-with-container"
   image           = var.lighthouse_image
   custom_args     = local.lighthouse_custom_args_map[each.value]

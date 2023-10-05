@@ -60,6 +60,7 @@ data "google_compute_snapshot" "archive_snapshot" {
 }
 
 resource "google_compute_disk" "datadir" {
+  count    = var.datadir_disk_size > 0 ? 1 : 0
   name     = "${var.prefix}-${var.instance_name}-datadir-disk-${var.suffix}"
   snapshot = local.has_datadir_disk_snapshot ? data.google_compute_snapshot.archive_snapshot.self_link : null
   type     = "pd-balanced"
@@ -97,10 +98,13 @@ resource "google_compute_instance" "this" {
     source = google_compute_disk.boot.self_link
   }
 
-  attached_disk {
-    source      = google_compute_disk.datadir.self_link
-    device_name = google_compute_disk.datadir.name
-    mode        = "READ_WRITE"
+  dynamic "attached_disk" {
+    for_each = google_compute_disk.datadir.*.self_link
+    content {
+      source      = attached_disk.value
+      device_name = google_compute_disk.datadir.*.name[0]
+      mode        = "READ_WRITE"
+    }
   }
 
   network_interface {

@@ -1,11 +1,11 @@
 # Reth Node Infra
 
-Automates ETH node setup using Lighthouse for the beacon chain and reth for the execution layer.
+Automates ETH node setup using Lighthouse for the beacon chain and Reth for the execution layer.
 This is just a plain node setup with no staking involved.
 
 ## Architecture
 
-Both Lighthouse and reth have their own Compute instance and run within a docker container.
+Both Lighthouse and Reth have their own Compute instance and run within a docker container.
 Both also have their own persistent disk used for the `datadir`.
 The persistent disk is mount in `/mnt/disks/sdb/` on the host side and `/mnt/datadir` container side.
 
@@ -22,27 +22,39 @@ make devops/terraform/apply
 ## JWT Token deployment
 
 The HTTP connection between your beacon node and execution node needs to be authenticated using a JWT Token.
-The `/mnt/disks/sdb/jwt.hex` (`/mnt/datadir/jwt.hex` within the container) file is generated automatically by reth.
+The `/mnt/disks/sdb/jwt.hex` (`/mnt/datadir/jwt.hex` within the container) file is generated automatically by Reth.
 But it could be overridden using the command below and updating the secret manager.
 
 ```sh
 openssl rand -hex 32
 ```
 
-## Bootstrapping
+## Local NVMe SSD
 
-Synchronizing the reth archive node from scratch can take a long time on network attached disk.
-For this reason it's possible to mount local NVMe SSDs in raid0 to speed up the process.
-It should only be used for the first syncing since this type of disk is designed for temporary storage.
-To bootstrap the node using NVMe set `bootstrap=true` and redeploy the node, e.g.
+Synchronizing the Reth archive node from scratch can take a long time on network attached disk.
+For this reason it's possible to mount local NVMe SSDs in raid0 for better performances.
+To do so set the bootstrap flag to true.
+This will create a raid0 logical device mounted as `/mnt/disks/md0` on the host VM.
+It can stay this way for normal operations, but keep in mind that local disks are designed for temporary storage.
+This means rebooting or recreating the VM would lead to data loss.
+
+## Backing up chain data
+
+Reth chain data can be backed up to a network attached SSD (fast but expensive) or to a bucket (cheap, but slow).
+To back it up to a network attached SSD adjust `reth_datadir_disk_size` prior to creating the VM.
+Once the node is fully synced stop the container to copy the local data to the network attached persistent disk.
 
 ```sh
-devops/terraform/redeploy/reth_archive_node_vm/node1
+toolbox gsutil -o GSUtil:parallel_composite_upload_threshold=150M -m \
+cp -r /media/root/mnt/disks/md0/* /media/root/mnt/disks/sdb/
 ```
 
-This will create a raid0 logical device mounted as `/mnt/disks/md0` on the host VM.
-Once the node is fully synced stop the reth container and copy the `/mnt/disks/md0` to the network attached persistent disk `/mnt/disks/sdb`.
-Disable bootstrapping `bootstrap=false` and redeploy the VM.
+For bucket backup, set `create_backup_bucket=true`, stop the container and copy to the bucket.
+
+```sh
+toolbox gsutil -o GSUtil:parallel_composite_upload_threshold=150M -m \
+cp -r /media/root/mnt/disks/md0/* gs://reth-infra-backup-bucket/reth-`date +%Y%m%d`/
+```
 
 ## Reaching a firewalled RPC
 
